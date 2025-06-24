@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Cobrança</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+<div class="container">
+  <div class="row text-center mb-4" id="resumoIndicadores">
+  <div class="col-md-3">
+    <div class="card border-primary shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Boletos</h5>
+        <p class="card-text fs-4 fw-bold text-primary" id="indicadorTotalBoletos">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-success shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Valor Recebido</h5>
+        <p class="card-text fs-4 fw-bold text-success" id="indicadorValorRecebido">R$ 0,00</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-warning shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Valor Pendente</h5>
+        <p class="card-text fs-4 fw-bold text-warning" id="indicadorValorPendente">R$ 0,00</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-dark shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Valor Total</h5>
+        <p class="card-text fs-4 fw-bold text-dark" id="indicadorValorTotal">R$ 0,00</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <h1 class="mb-4 text-center fw-bold">Cadastro de Boletos</h1>
+  <form id="boletoForm" class="row g-3 mb-4">
+    <div class="col-md-4"><label class="form-label">Empresa</label><input type="text" class="form-control" id="empresa" required></div>
+    <div class="col-md-4"><label class="form-label">Devedor</label><input type="text" class="form-control" id="devedor" required></div>
+    <div class="col-md-4"><label class="form-label">Localidade</label><input type="text" class="form-control" id="localidade" required></div>
+    <div class="col-md-4"><label class="form-label">Valor da Parcela</label><input type="number" class="form-control" id="valor_parcela" required></div>
+    <div class="col-md-4"><label class="form-label">Valor Total</label><input type="number" class="form-control" id="valor_total" required></div>
+    <div class="col-md-4"><label class="form-label">Qtd Parcelas</label><input type="number" class="form-control" id="qtd_parcelas" required></div>
+    <div class="col-md-4"><label class="form-label">Parcela Atual</label><input type="number" class="form-control" id="parcela_atual" required></div>
+    <div class="col-md-4"><label class="form-label">Data Geração</label><input type="date" class="form-control" id="data_geracao" required></div>
+    <div class="col-md-4"><label class="form-label">Data Vencimento</label><input type="date" class="form-control" id="data_vencimento" required></div>
+    <div class="col-md-4"><label class="form-label">Status</label><input type="text" class="form-control" id="status" value="pendente" required></div>
+    <div class="col-12 text-end"><button type="submit" class="btn btn-primary">Cadastrar</button></div>
+  </form>
+  
+<div class="row mb-3">
+  <div class="col-md-3">
+    <label class="form-label">Filtrar por Empresa</label>
+    <select class="form-select" id="filtroEmpresa"><option value="">Todas</option></select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Filtrar por Devedor</label>
+    <select class="form-select" id="filtroDevedor"><option value="">Todos</option></select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Filtrar por Localidade</label>
+    <select class="form-select" id="filtroLocalidade"><option value="">Todas</option></select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Filtrar por Status</label>
+    <select class="form-select" id="filtroStatus"><option value="">Todos</option></select>
+  </div>
+</div>
+
+<div class="mb-3 d-flex align-items-center">
+  <input type="file" id="importarArquivo" class="form-control w-auto" accept=".csv">
+  <button class="btn btn-outline-primary ms-2" onclick="importarCSV()">
+    <i class="bi bi-upload me-1"></i> Importar Boletos
+  </button>
+</div>
+
+<h2 class="fw-bold mb-3">Boletos Cadastrados</h2>
+  <table class="table table-bordered table-hover text-center w-100">
+    <thead class="table-dark">
+  <tr>
+    <th>Empresa</th>
+    <th>Devedor</th>
+    <th>Localidade</th>
+    <th>Valor Parcela</th>
+    <th>Valor Total</th>
+    <th>Parcela</th>
+    <th>Qtd Parcelas</th>
+    <th>Data Geração</th>
+    <th>Vencimento</th>
+    <th>Status</th>
+    <th>Ações</th>
+  </tr>
+</thead>
+    <tbody id="tabelaBoletosBody"></tbody>
+  </table>
+</div>
+<div class="modal fade" id="modalObs" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Observações</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <ul class="list-group mb-3" id="listaObs"></ul>
+        <textarea class="form-control" id="novaObs" rows="3" placeholder="Adicionar nova observação..."></textarea>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-primary" id="btnSalvarObs">Salvar Observação</button></div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalEditar" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Editar Boleto</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <form id="formEditar" class="row g-3"></form>
+      </div>
+      <div class="modal-footer"><button type="submit" form="formEditar" class="btn btn-success">Salvar</button></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let boletoIdObs = null;
+let boletoIdEdicao = null;
+
+async function carregarBoletos() {
+  const empresa = document.getElementById("filtroEmpresa").value;
+  const devedor = document.getElementById("filtroDevedor").value;
+  const localidade = document.getElementById("filtroLocalidade").value;
+  const status = document.getElementById("filtroStatus").value;
+
+  const params = new URLSearchParams({ empresa, devedor, localidade, status });
+  const res = await fetch("http://127.0.0.1:8000/boletos/?" + params.toString());
+  const dados = await res.json();
+
+  // 🔢 Cálculo dos indicadores (fora do loop da tabela)
+  let totalBoletos = dados.length;
+  let valorRecebido = 0;
+  let valorPendente = 0;
+  let valorTotal = 0;
+
+  dados.forEach(b => {
+    const vp = parseFloat(b.valor_parcela);
+    const atual = parseInt(b.parcela_atual);
+    const total = parseInt(b.qtd_parcelas);
+    valorRecebido += atual * vp;
+    valorPendente += (total - atual) * vp;
+    valorTotal += total * vp;
+  });
+
+  document.getElementById("indicadorTotalBoletos").textContent = totalBoletos;
+  document.getElementById("indicadorValorRecebido").textContent = "R$ " + valorRecebido.toFixed(2);
+  document.getElementById("indicadorValorPendente").textContent = "R$ " + valorPendente.toFixed(2);
+  document.getElementById("indicadorValorTotal").textContent = "R$ " + valorTotal.toFixed(2);
+
+  // 🧾 Preenchimento da tabela
+  const tbody = document.getElementById("tabelaBoletosBody");
+  tbody.innerHTML = "";
+
+  dados.forEach(b => {
+    let row = `
+      <tr>
+        <td>${b.empresa}</td>
+        <td>${b.devedor}</td>
+        <td>${b.localidade}</td>
+        <td>R$ ${parseFloat(b.valor_parcela).toFixed(2)}</td>
+        <td>R$ ${parseFloat(b.valor_total).toFixed(2)}</td>
+        <td>${b.parcela_atual}</td>
+        <td>${b.qtd_parcelas}</td>
+        <td>${b.data_geracao}</td>
+        <td>${b.data_vencimento}</td>
+        <td>${b.status}</td>
+        <td>
+          <button class='btn btn-outline-success btn-sm me-1' onclick='marcarCobrado(${b.id})'><i class='bi bi-check-circle'></i></button>
+          <button class='btn btn-outline-warning btn-sm me-1' onclick='abrirEditar(${b.id})'><i class='bi bi-pencil-square'></i></button>
+          <button class='btn btn-outline-info btn-sm me-1' onclick='abrirObs(${b.id})'><i class='bi bi-chat-dots'></i></button>
+          <button class='btn btn-outline-danger btn-sm' onclick='excluirBoleto(${b.id})'><i class='bi bi-trash'></i></button>
+        </td>
+      </tr>
+    `;
+    tbody.innerHTML += row;
+  });
+}
+
+async function carregarOpcoesFiltro() {
+  const res = await fetch("http://127.0.0.1:8000/boletos/");
+  const dados = await res.json();
+
+  const campos = ["empresa", "devedor", "localidade", "status"];
+  campos.forEach(campo => {
+    const select = document.getElementById("filtro" + campo.charAt(0).toUpperCase() + campo.slice(1));
+    const valoresUnicos = [...new Set(dados.map(b => b[campo]))].filter(v => v);
+    select.innerHTML = `<option value="">Todos</option>`;
+    valoresUnicos.forEach(v => {
+      select.innerHTML += `<option value="${v}">${v}</option>`;
+    });
+  });
+}
+
+async function abrirEditar(id) {
+  const res = await fetch("http://127.0.0.1:8000/boletos/");
+  const dados = await res.json();
+  const boleto = dados.find(b => b.id === id);
+  const form = document.getElementById("formEditar");
+  boletoIdEdicao = id;
+  form.innerHTML = "";
+  for (let [key, value] of Object.entries(boleto)) {
+    if (key === "id" || key === "observacoes") continue;
+    form.innerHTML += `<div class='col-md-6'><label class='form-label'>${key}</label><input class='form-control' name='${key}' value='${value}' required></div>`;
+  }
+  new bootstrap.Modal(document.getElementById("modalEditar")).show();
+}
+
+document.getElementById("formEditar").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const dados = {};
+  [...form.elements].forEach(el => {
+    if (el.name) dados[el.name] = el.value;
+  });
+  await fetch(`http://127.0.0.1:8000/boletos/${boletoIdEdicao}`, {
+    method: "PUT", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(dados)
+  });
+  bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
+  carregarBoletos();
+});
+
+document.getElementById("boletoForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  const campos = ["empresa", "devedor", "localidade", "valor_parcela", "valor_total", "qtd_parcelas", "parcela_atual", "data_geracao", "data_vencimento", "status"];
+  const data = {};
+  campos.forEach(id => data[id] = document.getElementById(id).value);
+  await fetch("http://127.0.0.1:8000/boletos/", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  this.reset();
+  carregarBoletos();
+});
+
+async function marcarCobrado(id) {
+  await fetch(`http://127.0.0.1:8000/boletos/${id}/cobrado`, { method: "POST" });
+  carregarBoletos();
+}
+
+async function excluirBoleto(id) {
+  if (!confirm("Confirma a exclusão?")) return;
+  await fetch(`http://127.0.0.1:8000/boletos/${id}`, { method: "DELETE" });
+  carregarBoletos();
+}
+
+async function abrirObs(id) {
+  boletoIdObs = id;
+  const res = await fetch(`http://127.0.0.1:8000/boletos/${id}/observacoes/`);
+  const obs = await res.json();
+  const lista = document.getElementById("listaObs");
+  lista.innerHTML = "";
+  obs.forEach(o => {
+    lista.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
+      <span><strong>${o.data}</strong> - <span id='obs-desc-${o.id}'>${o.descricao}</span></span>
+      <span>
+        <button class='btn btn-sm btn-light border me-1' onclick='editarObs(${o.id}, "${o.descricao.replace(/"/g, '&quot;')}")'><i class='bi bi-pencil-square'></i></button>
+        <button class='btn btn-sm btn-light border' onclick='excluirObs(${o.id})'><i class='bi bi-trash'></i></button>
+      </span></li>`;
+  });
+  new bootstrap.Modal(document.getElementById("modalObs")).show();
+}
+
+async function editarObs(id, descAtual) {
+  const nova = prompt("Editar observação:", descAtual);
+  if (!nova) return;
+  const hoje = new Date().toISOString().split("T")[0];
+
+  await fetch(`http://127.0.0.1:8000/observacoes/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: hoje, descricao: nova })
+  });
+
+  // Fecha o modal antes de reabrir com lista atualizada
+  bootstrap.Modal.getInstance(document.getElementById("modalObs")).hide();
+  abrirObs(boletoIdObs);
+}
+
+async function excluirObs(id) {
+  if (!confirm("Excluir esta observação?")) return;
+
+  await fetch(`http://127.0.0.1:8000/observacoes/${id}`, {
+    method: "DELETE"
+  });
+
+  // Fecha o modal antes de reabrir com lista atualizada
+  bootstrap.Modal.getInstance(document.getElementById("modalObs")).hide();
+  abrirObs(boletoIdObs);
+}
+
+
+document.getElementById("btnSalvarObs").addEventListener("click", async function () {
+  const texto = document.getElementById("novaObs").value;
+  const hoje = new Date().toISOString().split("T")[0];
+  if (!texto.trim()) return;
+  await fetch(`http://127.0.0.1:8000/boletos/${boletoIdObs}/observacoes/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: hoje, descricao: texto })
+  });
+  document.getElementById("novaObs").value = "";
+  bootstrap.Modal.getInstance(document.getElementById("modalObs")).hide(); // <- FECHA corretamente
+  abrirObs(boletoIdObs);
+});
+
+async function importarCSV() {
+  const input = document.getElementById("importarArquivo");
+  if (!input.files.length) {
+    alert("Selecione um arquivo CSV para importar.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", input.files[0]);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/boletos/importar/", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) {
+      const error = await res.text();
+      alert("Erro ao importar: " + error);
+      return;
+    }
+
+    const resultado = await res.json();
+    alert(`Boletos importados com sucesso: ${resultado.importados}`);
+    input.value = "";
+    carregarBoletos();
+  } catch (e) {
+    alert("Erro inesperado ao importar boletos.");
+    console.error(e);
+  }
+}
+
+window.onload = function () {
+  carregarBoletos();
+  carregarOpcoesFiltro();
+
+  // Adiciona escuta aos selects
+  ["filtroEmpresa", "filtroDevedor", "filtroLocalidade", "filtroStatus"].forEach(id => {
+    document.getElementById(id).addEventListener("change", carregarBoletos);
+  });
+};
+
+</script>
+</body>
+</html>
