@@ -78,9 +78,18 @@
 </div>
 
 <div class="mb-3 d-flex align-items-center">
-  <input type="file" id="importarArquivo" class="form-control w-auto" accept=".csv">
-  <button class="btn btn-outline-primary ms-2" onclick="importarCSV()">
+  <input type="file" id="inputRestoreBackup" class="form-control w-auto ms-2">
+
+  <button class="btn btn-success ms-2" onclick="importarCSV()">
     <i class="bi bi-upload me-1"></i> Importar Boletos
+  </button>
+
+  <button class="btn btn-danger ms-2" onclick="enviarBackupRestauracao()">
+    <i class="bi bi-arrow-bar-up me-1"></i> Restaurar Backup
+  </button>
+
+  <button class="btn btn-outline-secondary ms-2" onclick="baixarBackup()">
+    <i class="bi bi-download me-1"></i> Salvar Backup
   </button>
 </div>
 
@@ -131,7 +140,64 @@
 <script>
 let boletoIdObs = null;
 let boletoIdEdicao = null;
+function baixarBackup() {
+  window.open("http://127.0.0.1:8000/exportar-db", "_blank");
+}
+async function enviarBackupRestauracao() {
+  const input = document.getElementById("inputRestoreBackup");
+  if (!input.files.length) {
+    alert("Selecione um arquivo .db para restaurar.");
+    return;
+  }
 
+  const formData = new FormData();
+  formData.append("file", input.files[0]);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/restaurar-backup-upload", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!res.ok) {
+      const erro = await res.text();
+      alert("Erro: " + erro);
+      return;
+    }
+
+    alert("Backup restaurado com sucesso!");
+    location.reload();
+  } catch (e) {
+    alert("Erro ao enviar backup.");
+    console.error(e);
+  }
+}
+
+async function restaurarBackup() {
+  const nome = prompt("Digite o nome do backup (ex: backup_20250626_141532.db):");
+  if (!nome) return;
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/restaurar-backup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome_arquivo: nome })
+    });
+
+    if (!res.ok) {
+      const erro = await res.text();
+      alert("Erro: " + erro);
+      return;
+    }
+
+    alert("Backup restaurado com sucesso! Recarregue a página.");
+    location.reload();
+
+  } catch (e) {
+    alert("Falha ao restaurar backup.");
+    console.error(e);
+  }
+}
 async function carregarBoletos() {
   const empresa = document.getElementById("filtroEmpresa").value;
   const devedor = document.getElementById("filtroDevedor").value;

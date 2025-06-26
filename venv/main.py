@@ -5,12 +5,14 @@ from models import Base, Boleto, Observacao
 from schemas import BoletoCreate, BoletoResponse, ObservacaoCreate, ObservacaoResponse
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import timedelta, date
+from datetime import timedelta
 from fastapi import UploadFile, File
 import csv
 import io
-from datetime import datetime
 from openpyxl import load_workbook
+from fastapi.responses import FileResponse
+from datetime import datetime
+import shutil
 
 Base.metadata.create_all(bind=engine)
 
@@ -170,3 +172,24 @@ def excluir_observacao(obs_id: int, db: Session = Depends(get_db)):
     db.delete(observacao)
     db.commit()
     return {"mensagem": "Observação excluída"}
+
+@app.get("/exportar-db")
+def exportar_db():
+    return FileResponse("boletos.db", filename="boletos_backup.db", media_type='application/octet-stream')
+
+@app.get("/criar-backup")
+def criar_backup():
+    agora = datetime.now().strftime("%Y%m%d_%H%M%S")
+    nome_backup = f"backup_{agora}.db"
+    shutil.copy("boletos.db", nome_backup)
+    return {"mensagem": f"Backup criado: {nome_backup}"}
+
+   
+@app.post("/restaurar-backup-upload")
+def restaurar_backup_upload(file: UploadFile = File(...)):
+    try:
+        with open("boletos.db", "wb") as f:
+            f.write(file.file.read())
+        return {"mensagem": "Backup restaurado com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
