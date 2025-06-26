@@ -405,6 +405,36 @@ window.onload = function () {
     document.getElementById(id).addEventListener("change", carregarBoletos);
   });
 };
+
+function importarCSV() {
+  const input = document.getElementById("inputRestoreBackup");
+  if (!input.files.length) {
+    alert("Selecione um arquivo CSV ou XLSX para importar.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", input.files[0]);
+
+  fetch(`${API_BASE}/boletos/importar/`, {
+    method: "POST",
+    body: formData
+  })
+    .then(res => {
+      if (!res.ok) {
+        return res.text().then(msg => { throw new Error(msg); });
+      }
+      return res.json();
+    })
+    .then(dados => {
+      alert(`${dados.importados} boletos importados com sucesso!`);
+      carregarBoletos();
+    })
+    .catch(err => {
+      alert("Erro ao importar: " + err.message);
+      console.error(err);
+    });
+}
 </script>
 </body>
 </html>
