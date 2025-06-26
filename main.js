@@ -1,3 +1,5 @@
+const API_BASE = "https://sistema-boletos-7tfv.onrender.com";
+
 // main.js
 let boletoIdObs = null;
 let boletoIdEdicao = null;
@@ -6,7 +8,7 @@ let boletoIdEdicao = null;
 let dadosBoletos = [];
 
 async function carregarBoletos() {
-  const res = await fetch("http://127.0.0.1:8000/boletos/");
+  const res = await fetch(`${API_BASE}/boletos/`);
   dadosBoletos = await res.json();
 
   if (dadosBoletos.length > 0) {
@@ -15,13 +17,11 @@ async function carregarBoletos() {
   } else {
     document.getElementById("tabelaBoletosBody").innerHTML = "<tr><td colspan='11'>Nenhum boleto cadastrado.</td></tr>";
   }
-}
-  const res = await fetch("http://127.0.0.1:8000/boletos/");
-  const dados = await res.json();
+
   const tbody = document.getElementById("tabelaBoletosBody");
   tbody.innerHTML = "";
 
-  dados.forEach(b => {
+  dadosBoletos.forEach(b => {
     let row = `
       <tr>
         <td>${b.empresa}</td>
@@ -47,7 +47,7 @@ async function carregarBoletos() {
 }
 
 async function abrirEditar(id) {
-  const res = await fetch("http://127.0.0.1:8000/boletos/");
+  const res = await fetch(`${API_BASE}/boletos/`);
   const dados = await res.json();
   const boleto = dados.find(b => b.id === id);
   const form = document.getElementById("formEditar");
@@ -67,8 +67,9 @@ document.getElementById("formEditar").addEventListener("submit", async function(
   [...form.elements].forEach(el => {
     if (el.name) dados[el.name] = el.value;
   });
-  await fetch(`http://127.0.0.1:8000/boletos/${boletoIdEdicao}`, {
-    method: "PUT", headers: {"Content-Type": "application/json"},
+  await fetch(`${API_BASE}/boletos/${boletoIdEdicao}`, {
+    method: "PUT", 
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify(dados)
   });
   bootstrap.Modal.getInstance(document.getElementById("modalEditar")).hide();
@@ -80,7 +81,7 @@ document.getElementById("boletoForm").addEventListener("submit", async function(
   const campos = ["empresa", "devedor", "localidade", "valor_parcela", "valor_total", "qtd_parcelas", "parcela_atual", "data_geracao", "data_vencimento", "status"];
   const data = {};
   campos.forEach(id => data[id] = document.getElementById(id).value);
-  await fetch("http://127.0.0.1:8000/boletos/", {
+  await fetch(`${API_BASE}/boletos/`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify(data)
@@ -90,19 +91,19 @@ document.getElementById("boletoForm").addEventListener("submit", async function(
 });
 
 async function marcarCobrado(id) {
-  await fetch(`http://127.0.0.1:8000/boletos/${id}/cobrado`, { method: "POST" });
+  await fetch(`${API_BASE}/boletos/${id}/cobrado`, { method: "POST" });
   carregarBoletos();
 }
 
 async function excluirBoleto(id) {
   if (!confirm("Confirma a exclusão?")) return;
-  await fetch(`http://127.0.0.1:8000/boletos/${id}`, { method: "DELETE" });
+  await fetch(`${API_BASE}/boletos/${id}`, { method: "DELETE" });
   carregarBoletos();
 }
 
 async function abrirObs(id) {
   boletoIdObs = id;
-  const res = await fetch(`http://127.0.0.1:8000/boletos/${id}/observacoes/`);
+  const res = await fetch(`${API_BASE}/boletos/${id}/observacoes/`);
   const obs = await res.json();
   const lista = document.getElementById("listaObs");
   lista.innerHTML = "";
@@ -122,7 +123,7 @@ async function editarObs(id, descAtual) {
   if (!nova) return;
   const hoje = new Date().toISOString().split("T")[0];
 
-  await fetch(`http://127.0.0.1:8000/observacoes/${id}`, {
+  await fetch(`${API_BASE}/observacoes/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: hoje, descricao: nova })
@@ -134,7 +135,7 @@ async function editarObs(id, descAtual) {
 
 async function excluirObs(id) {
   if (!confirm("Excluir esta observação?")) return;
-  await fetch(`http://127.0.0.1:8000/observacoes/${id}`, { method: "DELETE" });
+  await fetch(`${API_BASE}/observacoes/${id}`, { method: "DELETE" });
   bootstrap.Modal.getInstance(document.getElementById("modalObs")).hide();
   abrirObs(boletoIdObs);
 }
@@ -143,7 +144,7 @@ document.getElementById("btnSalvarObs").addEventListener("click", async function
   const texto = document.getElementById("novaObs").value;
   const hoje = new Date().toISOString().split("T")[0];
   if (!texto.trim()) return;
-  await fetch(`http://127.0.0.1:8000/boletos/${boletoIdObs}/observacoes/`, {
+  await fetch(`${API_BASE}/boletos/${boletoIdObs}/observacoes/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: hoje, descricao: texto })
