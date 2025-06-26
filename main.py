@@ -193,3 +193,17 @@ def restaurar_backup_upload(file: UploadFile = File(...)):
         return {"mensagem": "Backup restaurado com sucesso"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Monta arquivos estáticos se houver
+if os.path.isdir("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Rota para servir o index.html
+@app.get("/", response_class=HTMLResponse)
+def read_index():
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
