@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: sistema-boletos
-    env: node
-    buildCommand: npm install
-    startCommand: node server.js
-    plan: free
-    branch: main
-    repo: https://github.com/Pedro-hpa/sistema-boletos
