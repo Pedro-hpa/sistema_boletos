@@ -45,6 +45,7 @@
 
   <h1 class="mb-4 text-center fw-bold">Cadastro de Boletos</h1>
 <div class="mb-4 text-end">
+  <button class="btn btn-outline-secondary ms-2" onclick="abrirListaEmpresas()">Ver Empresas</button>
   <button class="btn btn-outline-primary" onclick="abrirModalEmpresa()">+ Nova Empresa</button>
 </div>
   <form id="boletoForm" class="row g-3 mb-4">
@@ -188,6 +189,30 @@
       </div>
       <div class="modal-body" id="modalEmpresaBody">
         <!-- Conteúdo preenchido via JS -->
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalListaEmpresas" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Empresas Cadastradas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-hover table-bordered">
+          <thead class="table-dark">
+            <tr>
+              <th>Nome</th>
+              <th>CNPJ</th>
+              <th>Telefone</th>
+              <th>Email</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="listaEmpresasBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -465,11 +490,12 @@ document.getElementById("formEmpresa").addEventListener("submit", async function
   });
 
   try {
-    const res = await fetch(`${API_BASE}/empresas/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dados)
-    });
+    const id = form.getAttribute("data-id");
+const res = await fetch(`${API_BASE}/empresas/${id || ""}`, {
+  method: id ? "PUT" : "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(dados)
+});
 
     if (!res.ok) {
       const erro = await res.text();
@@ -479,11 +505,57 @@ document.getElementById("formEmpresa").addEventListener("submit", async function
 
     alert("Empresa cadastrada com sucesso!");
     bootstrap.Modal.getInstance(document.getElementById("modalCadastroEmpresa")).hide();
+    form.removeAttribute("data-id");
   } catch (e) {
     alert("Erro inesperado: " + e);
     console.error(e);
   }
 });
+async function abrirListaEmpresas() {
+  const res = await fetch(`${API_BASE}/empresas/`);
+  const empresas = await res.json();
+  const tbody = document.getElementById("listaEmpresasBody");
+  tbody.innerHTML = "";
+
+  empresas.forEach(e => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${e.nome}</td>
+        <td>${e.cnpj || "-"}</td>
+        <td>${e.telefone_receita || "-"}</td>
+        <td>${e.email_receita || "-"}</td>
+        <td>
+          <button class="btn btn-sm btn-warning me-1" onclick="editarEmpresa(${e.id})">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="excluirEmpresa(${e.id})">Excluir</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  new bootstrap.Modal(document.getElementById("modalListaEmpresas")).show();
+}
+
+async function editarEmpresa(id) {
+  const res = await fetch(`${API_BASE}/empresas/${id}`);
+  const empresa = await res.json();
+  const form = document.getElementById("formEmpresa");
+
+  for (let campo of form.elements) {
+    if (campo.name && empresa[campo.name] !== undefined) {
+      campo.value = empresa[campo.name];
+    }
+  }
+
+  form.setAttribute("data-id", id); // define que é edição
+  new bootstrap.Modal(document.getElementById("modalCadastroEmpresa")).show();
+}
+
+async function excluirEmpresa(id) {
+  if (!confirm("Confirma a exclusão da empresa?")) return;
+  await fetch(`${API_BASE}/empresas/${id}`, { method: "DELETE" });
+  abrirListaEmpresas(); // recarrega a lista
+}
+
 async function abrirFichaEmpresa(nome) {
   const res = await fetch(`${API_BASE}/empresas/?nome=${encodeURIComponent(nome)}`);
   const empresas = await res.json();
