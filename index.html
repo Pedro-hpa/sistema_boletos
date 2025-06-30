@@ -197,7 +197,7 @@
 <script>
 const API_BASE = "https://sistema-boletos-7tfv.onrender.com";
 
-let boletoIdObs = null;
+let boletoIdObs = null
 let boletoIdEdicao = null;
 
 function baixarBackup() {
@@ -455,6 +455,35 @@ window.abrirModalEmpresa = abrirModalEmpresa;
     document.getElementById(id).addEventListener("change", carregarBoletos);
   });
 };
+document.getElementById("formEmpresa").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const form = e.target;
+  const dados = {};
+
+  [...form.elements].forEach(el => {
+    if (el.name) dados[el.name] = el.value;
+  });
+
+  try {
+    const res = await fetch(`${API_BASE}/empresas/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados)
+    });
+
+    if (!res.ok) {
+      const erro = await res.text();
+      alert("Erro ao salvar empresa: " + erro);
+      return;
+    }
+
+    alert("Empresa cadastrada com sucesso!");
+    bootstrap.Modal.getInstance(document.getElementById("modalCadastroEmpresa")).hide();
+  } catch (e) {
+    alert("Erro inesperado: " + e);
+    console.error(e);
+  }
+});
 async function abrirFichaEmpresa(nome) {
   const res = await fetch(`${API_BASE}/empresas/?nome=${encodeURIComponent(nome)}`);
   const empresas = await res.json();
