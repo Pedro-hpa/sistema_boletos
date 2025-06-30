@@ -13,6 +13,8 @@ from openpyxl import load_workbook
 from fastapi.responses import FileResponse
 from datetime import datetime
 import shutil
+from models import Empresa
+from schemas import EmpresaCreate, EmpresaResponse
 
 Base.metadata.create_all(bind=engine)
 
@@ -207,3 +209,45 @@ if os.path.isdir("static"):
 def read_index():
     with open("index.html", "r", encoding="utf-8") as f:
         return f.read()
+    
+@app.post("/empresas/", response_model=EmpresaResponse)
+def criar_empresa(empresa: EmpresaCreate, db: Session = Depends(get_db)):
+    nova = Empresa(**empresa.dict())
+    db.add(nova)
+    db.commit()
+    db.refresh(nova)
+    return nova
+
+@app.get("/empresas/", response_model=List[EmpresaResponse])
+def listar_empresas(nome: str = "", db: Session = Depends(get_db)):
+    query = db.query(Empresa)
+    if nome:
+        query = query.filter(Empresa.nome.ilike(f"%{nome}%"))
+    return query.all()
+
+@app.get("/empresas/{empresa_id}", response_model=EmpresaResponse)
+def obter_empresa(empresa_id: int, db: Session = Depends(get_db)):
+    empresa = db.query(Empresa).get(empresa_id)
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    return empresa
+
+@app.put("/empresas/{empresa_id}", response_model=EmpresaResponse)
+def editar_empresa(empresa_id: int, dados: EmpresaCreate, db: Session = Depends(get_db)):
+    empresa = db.query(Empresa).get(empresa_id)
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    for key, value in dados.dict().items():
+        setattr(empresa, key, value)
+    db.commit()
+    db.refresh(empresa)
+    return empresa
+
+@app.delete("/empresas/{empresa_id}")
+def excluir_empresa(empresa_id: int, db: Session = Depends(get_db)):
+    empresa = db.query(Empresa).get(empresa_id)
+    if not empresa:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    db.delete(empresa)
+    db.commit()
+    return {"mensagem": "Empresa excluída"}

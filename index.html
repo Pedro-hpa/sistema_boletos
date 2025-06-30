@@ -44,6 +44,9 @@
   </div>
 
   <h1 class="mb-4 text-center fw-bold">Cadastro de Boletos</h1>
+<div class="mb-4 text-end">
+  <button class="btn btn-outline-primary" onclick="abrirModalEmpresa()">+ Nova Empresa</button>
+</div>
   <form id="boletoForm" class="row g-3 mb-4">
     <div class="col-md-4"><label class="form-label">Empresa</label><input type="text" class="form-control" id="empresa" required /></div>
     <div class="col-md-4"><label class="form-label">Devedor</label><input type="text" class="form-control" id="devedor" required /></div>
@@ -131,7 +134,6 @@
     </div>
   </div>
 </div>
-
 <div class="modal fade" id="modalEditar" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -148,7 +150,48 @@
     </div>
   </div>
 </div>
-
+<div class="modal fade" id="modalCadastroEmpresa" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cadastro de Empresa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formEmpresa" class="modal-body row g-3 px-3 pb-3">
+        <div class="col-md-6"><label class="form-label">Nome</label><input name="nome" required class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">CNPJ</label><input name="cnpj" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">QSA</label><input name="qsa" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Telefone Receita</label><input name="telefone_receita" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">E-mail Receita</label><input name="email_receita" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Endereço Receita</label><input name="endereco_receita" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Telefones</label><input name="telefones" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">E-mails</label><input name="emails" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Sócios</label><input name="socios" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Endereços</label><input name="enderecos" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Empresas Ligadas</label><input name="empresas_ligadas" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Pessoas Ligadas</label><input name="pessoas_ligadas" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label">Ex-Sócios</label><input name="ex_socios" class="form-control"></div>
+        <div class="col-md-12"><label class="form-label">Observações</label><textarea name="observacoes" class="form-control" rows="2"></textarea></div>
+        <div class="col-12 text-end">
+          <button type="submit" class="btn btn-success">Salvar Empresa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modalEmpresa" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ficha da Empresa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalEmpresaBody">
+        <!-- Conteúdo preenchido via JS -->
+      </div>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -252,7 +295,7 @@ async function carregarBoletos() {
   dados.forEach(b => {
     let row = `
       <tr>
-        <td>${b.empresa}</td>
+        <td><a href="#" onclick="abrirFichaEmpresa('${b.empresa}')">${b.empresa}</a></td>
         <td>${b.devedor}</td>
         <td>${b.localidade}</td>
         <td>R$ ${parseFloat(b.valor_parcela).toFixed(2)}</td>
@@ -397,15 +440,50 @@ document.getElementById("btnSalvarObs").addEventListener("click", async function
   abrirObs(boletoIdObs);
 });
 
+window.abrirModalEmpresa = function () {
+  document.getElementById("formEmpresa").reset();
+  new bootstrap.Modal(document.getElementById("modalCadastroEmpresa")).show();
+}
+
 window.onload = function () {
   carregarBoletos();
   carregarOpcoesFiltro();
+
+window.abrirModalEmpresa = abrirModalEmpresa;
 
   ["filtroEmpresa", "filtroDevedor", "filtroLocalidade", "filtroStatus"].forEach(id => {
     document.getElementById(id).addEventListener("change", carregarBoletos);
   });
 };
+async function abrirFichaEmpresa(nome) {
+  const res = await fetch(`${API_BASE}/empresas/?nome=${encodeURIComponent(nome)}`);
+  const empresas = await res.json();
+  if (!empresas.length) {
+    alert("Ficha não encontrada.");
+    return;
+  }
+  const e = empresas[0];
+  let html = `
+    <h5>${e.nome}</h5>
+    <p><strong>CNPJ:</strong> ${e.cnpj || "-"}</p>
+    <p><strong>QSA:</strong> ${e.qsa || "-"}</p>
+    <p><strong>Endereço Receita:</strong> ${e.endereco_receita || "-"}</p>
+    <p><strong>Telefone Receita:</strong> ${e.telefone_receita || "-"}</p>
+    <p><strong>Email Receita:</strong> ${e.email_receita || "-"}</p>
+    <p><strong>Telefones:</strong> ${e.telefones || "-"}</p>
+    <p><strong>E-mails:</strong> ${e.emails || "-"}</p>
+    <p><strong>Sócios:</strong> ${e.socios || "-"}</p>
+    <p><strong>Endereços:</strong> ${e.enderecos || "-"}</p>
+    <p><strong>Empresas Ligadas:</strong> ${e.empresas_ligadas || "-"}</p>
+    <p><strong>Pessoas Ligadas:</strong> ${e.pessoas_ligadas || "-"}</p>
+    <p><strong>Ex-sócios:</strong> ${e.ex_socios || "-"}</p>
+    <p><strong>Observações:</strong> ${e.observacoes || "-"}</p>
+  `;
+  document.getElementById("modalEmpresaBody").innerHTML = html;
+  new bootstrap.Modal(document.getElementById("modalEmpresa")).show();
+}
 
+window.abrirFichaEmpresa = abrirFichaEmpresa;
 function importarCSV() {
   const input = document.getElementById("inputRestoreBackup");
   if (!input.files.length) {

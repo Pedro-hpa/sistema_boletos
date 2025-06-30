@@ -24,7 +24,7 @@ async function carregarBoletos() {
   dadosBoletos.forEach(b => {
     let row = `
       <tr>
-        <td>${b.empresa}</td>
+        <td><a href="#" onclick="abrirFichaEmpresa('${b.empresa}')">${b.empresa}</a></td>
         <td>${b.devedor}</td>
         <td>${b.localidade}</td>
         <td>R$ ${parseFloat(b.valor_parcela).toFixed(2)}</td>
@@ -154,6 +154,66 @@ document.getElementById("btnSalvarObs").addEventListener("click", async function
   abrirObs(boletoIdObs);
 });
 
+async function abrirFichaEmpresa(nome) {
+  const res = await fetch(`${API_BASE}/empresas/?nome=${encodeURIComponent(nome)}`);
+  const empresas = await res.json();
+  if (!empresas.length) {
+    alert("Ficha não encontrada.");
+    return;
+  }
+  const e = empresas[0];
+  let html = `
+    <h5>${e.nome}</h5>
+    <p><strong>CNPJ:</strong> ${e.cnpj || "-"}</p>
+    <p><strong>QSA:</strong> ${e.qsa || "-"}</p>
+    <p><strong>Endereço Receita:</strong> ${e.endereco_receita || "-"}</p>
+    <p><strong>Telefone Receita:</strong> ${e.telefone_receita || "-"}</p>
+    <p><strong>Email Receita:</strong> ${e.email_receita || "-"}</p>
+    <p><strong>Telefones:</strong> ${e.telefones || "-"}</p>
+    <p><strong>E-mails:</strong> ${e.emails || "-"}</p>
+    <p><strong>Sócios:</strong> ${e.socios || "-"}</p>
+    <p><strong>Endereços:</strong> ${e.enderecos || "-"}</p>
+    <p><strong>Empresas Ligadas:</strong> ${e.empresas_ligadas || "-"}</p>
+    <p><strong>Pessoas Ligadas:</strong> ${e.pessoas_ligadas || "-"}</p>
+    <p><strong>Ex-sócios:</strong> ${e.ex_socios || "-"}</p>
+    <p><strong>Observações:</strong> ${e.observacoes || "-"}</p>
+  `;
+  document.getElementById("modalEmpresaBody").innerHTML = html;
+  new bootstrap.Modal(document.getElementById("modalEmpresa")).show();
+}
+window.abrirModalEmpresa = function () {
+  document.getElementById("formEmpresa").reset();
+  new bootstrap.Modal(document.getElementById("modalCadastroEmpresa")).show();
+}
+
+document.getElementById("formEmpresa").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const dados = {};
+  [...this.elements].forEach(el => {
+    if (el.name) dados[el.name] = el.value;
+  });
+
+  try {
+    const res = await fetch(`${API_BASE}/empresas/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dados)
+    });
+
+    if (!res.ok) {
+      const erro = await res.text();
+      alert("Erro ao cadastrar: " + erro);
+      return;
+    }
+
+    alert("Empresa cadastrada com sucesso!");
+    bootstrap.Modal.getInstance(document.getElementById("modalCadastroEmpresa")).hide();
+
+  } catch (err) {
+    alert("Erro inesperado.");
+    console.error(err);
+  }
+});
 window.onload = function () {
   carregarBoletos();
 };

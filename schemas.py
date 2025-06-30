@@ -38,3 +38,25 @@ class BoletoResponse(BoletoBase):
     model_config = {
         "from_attributes": True
     }
+
+class EmpresaBase(BaseModel):
+    nome: str
+    cnpj: str | None = None
+    qsa: str | None = None
+    endereco_receita: str | None = None
+    telefone_receita: str | None = None
+    email_receita: str | None = None
+    telefones: str | None = None
+    emails: str | None = None
+    socios: str | None = None
+    enderecos: str | None = None
+    empresas_ligadas: str | None = None
+    pessoas_ligadas: str | None = None
+    ex_socios: str | None = None
+    observacoes: str | None = None
+
+class EmpresaCreate(EmpresaBase): pass
+
+class EmpresaResponse(EmpresaBase):
+    id: int
+    model_config = {"from_attributes": True}
