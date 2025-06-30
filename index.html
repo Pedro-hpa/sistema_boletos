@@ -547,13 +547,19 @@ async function editarEmpresa(id) {
   }
 
   form.setAttribute("data-id", id); // define que é edição
+  bootstrap.Modal.getInstance(document.getElementById("modalListaEmpresas")).hide();
   new bootstrap.Modal(document.getElementById("modalCadastroEmpresa")).show();
 }
 
 async function excluirEmpresa(id) {
   if (!confirm("Confirma a exclusão da empresa?")) return;
+
   await fetch(`${API_BASE}/empresas/${id}`, { method: "DELETE" });
-  abrirListaEmpresas(); // recarrega a lista
+
+  // ✅ Fecha o modal antes de reabrir
+  bootstrap.Modal.getInstance(document.getElementById("modalListaEmpresas"))?.hide();
+
+  abrirListaEmpresas(); // Recarrega a lista com o modal limpo
 }
 
 async function abrirFichaEmpresa(nome) {
